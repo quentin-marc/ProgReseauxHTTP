@@ -1,9 +1,9 @@
-# Default ignored files
+# Default ignored server.files
 /shelf/
 /workspace.xml
 # Editor-based HTTP Client requests
 /httpRequests/
-# Datasource local storage ignored files
+# Datasource local storage ignored server.files
 /dataSources/
 /dataSources.local.xml
 
@@ -21,7 +21,7 @@ out/
 *.iml
 *.ipr
 
-# BlueJ files
+# BlueJ server.files
 *.ctxt
 
 # Mobile Tools for Java (J2ME)
@@ -52,7 +52,7 @@ hs_err_pid*
 
 # Packages #
 ############
-# it's better to unpack these files and commit the raw source
+# it's better to unpack these server.files and commit the raw source
 # git has its own built in compression methods
 *.7z
 *.dmg
@@ -65,7 +65,7 @@ hs_err_pid*
 *.sql
 *.sqlite
 
-# OS generated files #
+# OS generated server.files #
 ######################
 .DS_Store
 .DS_Store?
