@@ -5,53 +5,44 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-/**
- * Example program from Chapter 1 Programming Spiders, Bots and Aggregators in
- * Java Copyright 2001 by Jeff Heaton
- *
- * WebServer is a very simple web-server. Any request is responded with a very
- * simple web-page.
- *
- * @author Jeff Heaton
- * @version 1.0
- */
 public class WebServer {
 
+    protected void start(int port) {
 
-    /**
-     * WebServer constructor.
-     */
-    protected void start() {
-        ServerSocket s;
-
-        System.out.println("Webserver starting up on port 80");
-        System.out.println("(press ctrl-c to exit)");
+        ServerSocket serverSocket;
         try {
             // create the main server socket
-            s = new ServerSocket(3000);
+            serverSocket = new ServerSocket(port);
+
+            System.out.println("\nLe serveur a démarré sur le port "+port);
+            System.out.println("Vous povez accéder au serveur via l'url: http://localhost:"+port);
+            System.out.println("Saisissez CTRL c pour arréter le serveur");
+
         } catch (Exception e) {
-            System.out.println("Error: " + e);
+            System.out.println("Erreur: " + e);
             return;
         }
 
-        System.out.println("Waiting for connection");
-        for (;;) {
+        // on maintient le serveur dans un etat eveillé
+        System.out.println("\nEn attente d'une connection au serveur...");
+        while(true){
             try {
-                // wait for a connection
-                Socket remote = s.accept();
-                // remote is now the connected socket
-                System.out.println("Connection, sending data.");
-                BufferedReader in = new BufferedReader(new InputStreamReader(
-                        remote.getInputStream()));
-                PrintWriter out = new PrintWriter(remote.getOutputStream());
+                // en attente d'une connection
+                Socket socketClient = serverSocket.accept();
+                System.out.println("\nClient connecté!");
+                System.out.println(socketClient.toString());
 
-                File resource = new File("src/server/files/index.html");
+                BufferedReader socIn = new BufferedReader(new InputStreamReader(
+                        socketClient.getInputStream()));
+                PrintWriter socOut = new PrintWriter(socketClient.getOutputStream());
+
+                File pathIndex = new File("src/server/files/index.html");
 
                 // read the data sent. We basically ignore it,
                 // stop reading once a blank line is hit. This
                 // blank line signals the end in 0, end 148,of the client HTTP
                 // headers.
-                String str = ".";
+                /*String str = ".";
                 while (str != null && !str.equals(""))
                     str = in.readLine();
 
@@ -78,25 +69,17 @@ public class WebServer {
                 fileIn.close();
                 out.flush();
 
-                remote.close();
+                 */
+
+                socketClient.close();
             } catch (Exception e) {
                 System.out.println("Error: " + e);
             }
         }
     }
 
-    protected void httpGET(){
-
-    }
-
-    /**
-     * Start the application.
-     *
-     * @param args
-     *            Command line parameters are not used.
-     */
     public static void main(String args[]) {
         WebServer ws = new WebServer();
-        ws.start();
+        ws.start(3000); // le serveur démarre sur le port 3000
     }
 }
