@@ -56,6 +56,7 @@ public class WebServer {
                 // lecture de la requete caractère par caractère et enregistrement des 4 derniers
                 // 8 * 255 limite taille requete HTTP par navigateur
                 int c1 = '\0', c2 = '\0', c3 = '\0', c4 = '\0', cLu = '\0';
+                String header = "";
                 for (int i = 0; i < 8 * 255; i++){
                     cLu = socIn.read();
                     if(c1 == '\0'){
@@ -77,14 +78,23 @@ public class WebServer {
                         c4 = cLu;
                     }
 
+                    header += (char) cLu;
+
                     //requete bien formee, on sort de la boucle
                     if((c1 == '\r' && c2 == '\n' && c3 == '\r' && c4 == '\n'))
                         break;
                 }
 
                 // la requete est bien formee
-                if(c1 == '\r' && c2 == '\n' && c3 == '\r' && c4 == '\n'){
-                    System.out.println("trouve");
+                if(c1 == '\r' && c2 == '\n' && c3 == '\r' && c4 == '\n' && !header.isEmpty()){
+
+                    String[] listeMotsHeader = header.split(" ");
+                    String typeRequete = listeMotsHeader[0];
+                    String nomRessource = listeMotsHeader[1].substring(1, listeMotsHeader[1].length());
+
+                    System.out.println(typeRequete);
+                    System.out.println(nomRessource);
+
                     // par défaut on retourne la page d'index au client
                     getRequest(INDEX);
                 }
