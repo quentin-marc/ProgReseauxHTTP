@@ -52,15 +52,46 @@ public class WebServer {
                         socketClient.getInputStream()));
                 socOut = new BufferedOutputStream(socketClient.getOutputStream());
 
-                //TODO WHAT is it?
-                // lecture des données envoyées
-                String str = ".";
-                while (str != null && !str.equals("")){
-                    str = socIn.readLine();
+                // Si la requete est mal formée (la sequence doit se terminer par \r\n\r\n), affichage d'une erreur 400
+                // lecture de la requete caractère par caractère et enregistrement des 4 derniers
+                // 8 * 255 limite taille requete HTTP par navigateur
+                int c1 = '\0', c2 = '\0', c3 = '\0', c4 = '\0', cLu = '\0';
+                for (int i = 0; i < 8 * 255; i++){
+                    cLu = socIn.read();
+                    if(c1 == '\0'){
+                        c1 = cLu;
+                    }
+                    else if(c2 == '\0'){
+                        c2 = cLu;
+                    }
+                    else if(c3 == '\0'){
+                        c3 = cLu;
+                    }
+                    else if(c4 == '\0'){
+                        c4 = cLu;
+                    }
+                    else{
+                        c1 = c2;
+                        c2 = c3;
+                        c3 = c4;
+                        c4 = cLu;
+                    }
+
+                    //requete bien formee, on sort de la boucle
+                    if((c1 == '\r' && c2 == '\n' && c3 == '\r' && c4 == '\n'))
+                        break;
                 }
 
-                // par défaut on retourne la page d'index au client
-                getRequest(INDEX);
+                // la requete est bien formee
+                if(c1 == '\r' && c2 == '\n' && c3 == '\r' && c4 == '\n'){
+                    System.out.println("trouve");
+                    // par défaut on retourne la page d'index au client
+                    getRequest(INDEX);
+                }
+                else{
+                    socOut.write(genererHeader("400 Bad Request").getBytes());
+                    socOut.flush();
+                }
 
                 socketClient.close();
             } catch (Exception e) {
