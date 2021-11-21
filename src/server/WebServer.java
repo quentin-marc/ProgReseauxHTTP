@@ -9,7 +9,7 @@ public class WebServer {
 
     // definition des URI
     private static final String SOURCE_DIRECTORY = "src/server/files/";
-    private static final String NOT_FOUND = SOURCE_DIRECTORY+"notfound.html";
+    private static final String NOT_FOUND = SOURCE_DIRECTORY+"notFound.html";
     private static final String INDEX = SOURCE_DIRECTORY+"index.html";
 
     // canaux d'I/O en attribut
@@ -163,22 +163,23 @@ public class WebServer {
         String header = "HTTP/1.0 " + status + "\r\n";
         if(filename.endsWith(".html") || filename.endsWith(".htm"))
             header += "Content-Type: text/html\r\n";
-        else if(filename.endsWith(".mp4"))
-            header += "Content-Type: video/mp4\r\n";
+        else if(filename.endsWith(".css"))
+            header += "Content-Type: text/css\r\n";
         else if(filename.endsWith(".png"))
             header += "Content-Type: image/png\r\n";
-        else if(filename.endsWith(".jpeg") || filename.endsWith(".jpeg"))
+        else if(filename.endsWith(".jpeg") || filename.endsWith(".jpg"))
             header += "Content-Type: image/jpg\r\n";
         else if(filename.endsWith(".mp3"))
             header += "Content-Type: audio/mp3\r\n";
+        else if(filename.endsWith(".mp4"))
+            header += "Content-Type: video/mp4\r\n";
         else if(filename.endsWith(".avi"))
             header += "Content-Type: video/x-msvideo\r\n";
-        else if(filename.endsWith(".css"))
-            header += "Content-Type: text/css\r\n";
-        else if(filename.endsWith(".pdf"))
-            header += "Content-Type: application/pdf\r\n";
         else if(filename.endsWith(".odt"))
             header += "Content-Type: application/vnd.oasis.opendocument.text\r\n";
+        else if(filename.endsWith(".pdf"))
+            header += "Content-Type: application/pdf\r\n";
+
         header += "Content-Length: " + length + "\r\n";
         header += "Server: Bot\r\n";
         header += "\r\n";

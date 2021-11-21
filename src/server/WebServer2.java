@@ -18,7 +18,7 @@ public class WebServer2 {
     /**Chemin relatif du r�pertoire de ressources du serveur*/
     protected static final String RESOURCE_DIRECTORY = "src/server/files";
     /**Chemin relatif de la page web � envoyer en cas d'erreur 404*/
-    protected static final String FILE_NOT_FOUND = "src/server/files/notfound.html";
+    protected static final String FILE_NOT_FOUND = "src/server/files/notFound.html";
     /**Chemin relatif de la page d'acceuil du serveur*/
     protected static final String INDEX = "src/server/files/index.html";
 
