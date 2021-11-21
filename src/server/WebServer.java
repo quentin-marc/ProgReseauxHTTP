@@ -204,8 +204,8 @@ public class WebServer {
             if(ressource.exists() && ressource.isFile()) {
                 socOut.write(genererHeader("200 OK", filename, ressource.length()).getBytes());
             } else {
-                /*resource = new File(FILE_NOT_FOUND);
-                out.write(makeHeader("404 Not Found", FILE_NOT_FOUND, resource.length()).getBytes());*/
+                ressource = new File(NOT_FOUND);
+                socOut.write(genererHeader("404 Not Found", NOT_FOUND, ressource.length()).getBytes());
             }
 
             // Ouverture d'un flux de lecture binaire sur la ressource
