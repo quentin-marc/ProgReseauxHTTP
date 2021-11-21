@@ -44,8 +44,8 @@ public class WebServer {
 
                 // en attente d'une connection
                 Socket socketClient = serverSocket.accept();
-                System.out.println("\nClient connecté!");
-                System.out.println(socketClient.toString());
+                System.out.println("\nRequete entrante. Informations du client:");
+                System.out.println("[IP: "+socketClient.getInetAddress()+", port: "+socketClient.getPort()+", localPort: "+socketClient.getLocalPort()+"]\n");
 
                 // création des canaux de communication avec le client
                 socIn = new BufferedReader(new InputStreamReader(
@@ -92,11 +92,39 @@ public class WebServer {
                     String typeRequete = listeMotsHeader[0];
                     String nomRessource = listeMotsHeader[1].substring(1, listeMotsHeader[1].length());
 
-                    System.out.println(typeRequete);
-                    System.out.println(nomRessource);
+                    if(nomRessource.isEmpty()) {
+                        // TODO get obligatoirement?
+                        requeteGET(INDEX);
+                    }
+                    else if(nomRessource.startsWith(SOURCE_DIRECTORY)) {
 
-                    // par défaut on retourne la page d'index au client
-                    getRequest(INDEX);
+                        // On redirigie vers la méthode associée à la requete de l'utilisateur
+                        switch (typeRequete){
+                            case "GET":
+                                requeteGET(nomRessource);
+                                break;
+                            case "POST":
+                                requetePOST(nomRessource);
+                                break;
+                            case "HEAD":
+                                requeteHEAD(nomRessource);
+                                break;
+                            case "PUT":
+                                requetePUT(nomRessource);
+                                break;
+                            case "DELETE":
+                                requeteDELETE(nomRessource);
+                                break;
+                            default:
+                                // Si la requete ne correspond à aucune des requetes implémentées
+                                socOut.write(genererHeader("501 Not Implemented").getBytes());
+                                socOut.flush();
+                        }
+                    } else {
+                        // Interdiction d'accéder à des ressources situées en dehors du dossier prévu à cet effet
+                        socOut.write(genererHeader("403 Forbidden").getBytes());
+                        socOut.flush();
+                    }
                 }
                 else{
                     socOut.write(genererHeader("400 Bad Request").getBytes());
@@ -166,8 +194,9 @@ public class WebServer {
      * Aucun autre code HTTP n'est pris en charge.
      * @param filename: l'uri de la ressource demandée
      */
-    private void getRequest(String filename) {
-        System.out.println("GET " + filename);
+    // TODO Implémentation erreur 404
+    private void requeteGET(String filename) {
+
         try {
             // Vérification de l'existence de la ressource demandée, renvoie la page not found sinon
             File ressource = new File(filename);
@@ -202,6 +231,46 @@ public class WebServer {
         }
     }
 
+    /**
+     * Implémentation de a requete HTTP POST.
+     * // TODO JAVADOC (important de bien détailler l'action de la méthode)
+     * @param filename: l'uri de la ressource demandée
+     */
+    private void requetePOST(String filename) {
+        System.out.println("requete POST " + filename);
+    }
+
+    /**
+     * Implémentation de a requete HTTP HEAD.
+     * // TODO JAVADOC (important de bien détailler l'action de la méthode)
+     * @param filename: l'uri de la ressource demandée
+     */
+    private void requeteHEAD(String filename) {
+        System.out.println("requete HEAD " + filename);
+    }
+
+    /**
+     * Implémentation de a requete HTTP PUT.
+     * // TODO JAVADOC (important de bien détailler l'action de la méthode)
+     * @param filename: l'uri de la ressource demandée
+     */
+    private void requetePUT(String filename) {
+        System.out.println("requete PUT " + filename);
+    }
+
+    /**
+     * Implémentation de a requete HTTP DELETE.
+     * // TODO JAVADOC (important de bien détailler l'action de la méthode)
+     * @param filename: l'uri de la ressource demandée
+     */
+    private void requeteDELETE(String filename) {
+        System.out.println("requete DELETE " + filename);
+    }
+
+    /**
+     * Lance le serveur
+     * @param args: aucun argument nécessaire en entrée
+     */
     public static void main(String args[]) {
         WebServer ws = new WebServer();
         ws.start(3000); // le serveur démarre sur le port 3000
