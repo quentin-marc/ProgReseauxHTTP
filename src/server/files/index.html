@@ -37,7 +37,25 @@
         <li><a href="./src/server/files/notFound.html">notFound.html</a></li>
     </ul>
     <h2>Requêtes implémentées:</h2>
+    <span>Voici la liste des requêtes implémentées sur le serveur et un exemple d'utilisation. Les requêtes implémentées suivent le standard HTTP.</span>
+    <ul>
+        <li><b>GET:</b> "GET http://localhost:3000/src/server/files/helloWorld.html"</li>
+        <li><b>POST:</b></li>
+        <li><b>HEAD:</b></li>
+        <li><b>PUT:</b></li>
+        <li><b>DELETE:</b></li>
+    </ul>
     <h2>Erreurs prises en charge:</h2>
+    <span>La gestion d'une partie des codes d'erreur HTTP ont été prises en charge. En voici la liste:</span>
+    <ul>
+        <li><b>200 OK:</b> Tout s'est bien passé, aucune erreur n'est survenue.</li>
+        <li><b>400 Bad Request:</b> La requête est mal formée et ne peut pas être lue par le serveur.</li>
+        <li><b>403 Forbidden:</b> Tentative d'accès à des fichiers qui ne sont pas en accès libre sur le serveur.</li>
+        <li><b>404 Not Found:</b> La ressource à laquelle vous essayez d'accéder n'existe pas sur le serveur.</li>
+        <li><b>500 Internal Server Error:</b> Un problème est survenu lors de l'exécution de la requête. A priori, l'erreur provient d'un problème lié au serveur, non à votre requête.</li>
+        <li><b>501 Not Implemented:</b> Le type de requête que vous essayez d'exécuter n'est pas pris en charge par le serveur. Pour connaitre les requêtes implémentées, se référencer à la section ci-dessus.</li>
+    </ul>
+    <span>TODO: Que se passe-t-il pour les erreurs non prises en charge? Renvoie quoi?</span>
 </body>
 
 </html>
