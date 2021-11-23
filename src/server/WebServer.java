@@ -13,7 +13,8 @@ public class WebServer {
     private static final String INDEX = SOURCE_DIRECTORY+"index.html";
 
     // canaux d'I/O en attribut
-    BufferedReader socIn;
+    BufferedInputStream socIn;
+    //BufferedReader socIn;
     BufferedOutputStream socOut;
 
     /**
@@ -48,8 +49,7 @@ public class WebServer {
                 System.out.println("[IP: "+socketClient.getInetAddress()+", port: "+socketClient.getPort()+", localPort: "+socketClient.getLocalPort()+"]\n");
 
                 // création des canaux de communication avec le client
-                socIn = new BufferedReader(new InputStreamReader(
-                        socketClient.getInputStream()));
+                socIn = new BufferedInputStream(socketClient.getInputStream());
                 socOut = new BufferedOutputStream(socketClient.getOutputStream());
 
                 // Si la requete est mal formée (la sequence doit se terminer par \r\n\r\n), affichage d'une erreur 400
@@ -252,10 +252,53 @@ public class WebServer {
 
     /**
      * Implémentation de a requete HTTP PUT.
-     * // TODO JAVADOC (important de bien détailler l'action de la méthode)
+     * La méthode tente de créer une nouvelle ressource, dont le contenu est constitué des données du corps de la requète reçue.
+     * Si une ressource du même nom existait déjà sur le serveur, elle est écrasée et l'en-tête de la réponse envoyée a un code de 204 No Content.
+     * Si la ressource n'existait pas, elle est créée et l'en-tête de la réponse envoyée a un code de 201 Created.
+     * La réponse ne contient pas de corps.
      * @param filename: l'uri de la ressource demandée
      */
     private void requetePUT(String filename) {
+        try {
+            File resource = new File(filename);
+            boolean existed = resource.exists();
+
+            // Efface le contenu fichier avant de le remplacer par les informations reçues
+            PrintWriter pw = new PrintWriter(resource);
+            pw.close();
+
+            // Ouverture d'un flux d'écriture binaire vers le fichier
+            BufferedOutputStream fileOut = new BufferedOutputStream(new FileOutputStream(resource));
+
+            // Lecture du corps de la requete
+            byte[] buffer = new byte[256];
+            while(socIn.available() > 0) {
+                int nbRead = socIn.read(buffer);
+                fileOut.write(buffer, 0, nbRead);
+            }
+            fileOut.flush();
+
+            //Fermeture du flux d'écriture vers le fichier
+            fileOut.close();
+
+            // Envoi du Header (pas besoin de corps)
+            if(existed) {
+                // Ressource modifiée avec succès, aucune information supplémentaire à fournir
+                socOut.write(genererHeader("204 No Content").getBytes());
+            } else {
+                // Ressource créée avec succès
+                socOut.write(genererHeader("201 Created").getBytes());
+            }
+            // Envoi des données
+            socOut.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+            // En cas d'erreur on essaie d'avertir le client
+            try {
+                socOut.write(genererHeader("500 Internal Server Error").getBytes());
+                socOut.flush();
+            } catch (Exception e2) {};
+        }
         System.out.println("requete PUT " + filename);
     }
 
