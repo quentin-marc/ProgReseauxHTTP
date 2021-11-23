@@ -248,7 +248,6 @@ public class WebServer {
      * En cas de succès, la réponse contient un entête. Le code HTTP retourné est 200.
      * En cas d'échec (la ressource n'a pas ete trouvée), la réponse contient un entête et un corps (la page d'erreur 404). Le code HTTP retourné est 404.
      * En cas d'erreur interne sur le serveur, la réponse contient seulement un entête spécifiant une erreur 500.
-     * Aucun autre code HTTP n'est pris en charge.
      * @param filename: l'uri de la ressource demandée
      */
     private void requeteHEAD(String filename) {
@@ -330,12 +329,46 @@ public class WebServer {
     }
 
     /**
-     * Implémentation de a requete HTTP DELETE.
-     * // TODO JAVADOC (important de bien détailler l'action de la méthode)
+     * Implémentation de la requête HTTP DELETE.
+     * La méthode HTTP DELETE supprime la ressource indiquée.
+     * En cas de succès, la réponse contient un entête. Le code HTTP retourné est 204.
+     * En cas d'échec (la ressource n'a pas ete trouvée), la réponse contient un entête et un corps (la page d'erreur 404). Le code HTTP retourné est 404.
+     * En cas d'erreur interne sur le serveur, la réponse contient seulement un entête spécifiant une erreur 500.
      * @param filename: l'uri de la ressource demandée
      */
     private void requeteDELETE(String filename) {
+
         System.out.println("requete DELETE " + filename);
+        try {
+            File resource = new File(filename);
+            // Suppression du fichier
+            boolean deleted = false;
+            if(resource.exists() && resource.isFile()) {
+                deleted = resource.delete();
+            }
+
+            // Envoi du Header
+            if(deleted) {
+                // Suppression du fichier effectué
+                socOut.write(genererHeader("204 No Content").getBytes());
+            } else if (!resource.exists()) {
+                // Le fichier est introuvable
+                socOut.write(genererHeader("404 Not Found").getBytes());
+            } else {
+                // Impossible de supprimer le fichier
+                socOut.write(genererHeader("403 Forbidden").getBytes());
+            }
+            // Envoi des données
+            socOut.flush();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            // En cas d'erreur on essaie d'avertir le client
+            try {
+                socOut.write(genererHeader("500 Internal Server Error").getBytes());
+                socOut.flush();
+            } catch (Exception e2) {};
+        }
     }
 
     /**
