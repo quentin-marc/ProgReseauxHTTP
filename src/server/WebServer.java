@@ -333,6 +333,7 @@ public class WebServer {
      * Implémentation de la requête HTTP DELETE.
      * La méthode HTTP DELETE supprime la ressource indiquée.
      * En cas de succès, la réponse contient un entête. Le code HTTP retourné est 204.
+     * En cas de succès, si on trouve un fichier de statut, la réponse contient un entête et un corps (ce fichier). Le code HTTP retourné est 200.
      * En cas d'échec (la ressource n'a pas ete trouvée), la réponse contient un entête et un corps (la page d'erreur 404). Le code HTTP retourné est 404.
      * En cas d'erreur interne sur le serveur, la réponse contient seulement un entête spécifiant une erreur 500.
      * @param filename: l'uri de la ressource demandée
@@ -351,6 +352,7 @@ public class WebServer {
             // Envoi du Header
             if(deleted) {
 
+                // Si fichier de statut trouvé, la méthode DELETE renvoie un code 200 et un fichier de statut plutôt qu'un code 204
                 ressource = new File(STATUT_DELETE);
                 if(ressource.exists() && ressource.isFile()) {
                     socOut.write(genererHeader("200 OK", STATUT_DELETE, ressource.length()).getBytes());
