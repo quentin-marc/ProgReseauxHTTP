@@ -4,13 +4,14 @@ package server;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 
 public class WebServer {
 
     // definition des URI
     private static final String SOURCE_DIRECTORY = "src/server/files/";
+    private static final String RESSOURCE_DIRECTORY = "ressources/";
     private static final String NOT_FOUND = SOURCE_DIRECTORY+"notFound.html";
+    private static final String STATUT_DELETE = SOURCE_DIRECTORY+"statutDelete.html";
     private static final String INDEX = SOURCE_DIRECTORY+"index.html";
 
     // canaux d'I/O en attribut
@@ -95,9 +96,9 @@ public class WebServer {
                     if(nomRessource.isEmpty()) {
                         requeteGET(INDEX);
                     }
-                    else if(nomRessource.startsWith(SOURCE_DIRECTORY)) {
+                    else if(nomRessource.startsWith(SOURCE_DIRECTORY) || nomRessource.startsWith(RESSOURCE_DIRECTORY)) {
 
-                        // On redirigie vers la méthode associée à la requete de l'utilisateur
+                        // On redirige vers la méthode associée à la requête de l'utilisateur
                         switch (typeRequete){
                             case "GET":
                                 requeteGET(nomRessource);
@@ -158,31 +159,30 @@ public class WebServer {
      */
     protected String genererHeader(String status, String filename, long length) {
 
-        // TODO citation pack parrain? C'est cramé là
-        String header = "HTTP/1.0 " + status + "\r\n";
+        String contentHeader = "HTTP/1.0 " + status + "\r\n";
         if(filename.endsWith(".html") || filename.endsWith(".htm"))
-            header += "Content-Type: text/html\r\n";
+            contentHeader += "Content-Type: text/html\r\n";
         else if(filename.endsWith(".css"))
-            header += "Content-Type: text/css\r\n";
+            contentHeader += "Content-Type: text/css\r\n";
         else if(filename.endsWith(".png"))
-            header += "Content-Type: image/png\r\n";
+            contentHeader += "Content-Type: image/png\r\n";
         else if(filename.endsWith(".jpeg") || filename.endsWith(".jpg"))
-            header += "Content-Type: image/jpg\r\n";
+            contentHeader += "Content-Type: image/jpg\r\n";
         else if(filename.endsWith(".mp3"))
-            header += "Content-Type: audio/mp3\r\n";
+            contentHeader += "Content-Type: audio/mp3\r\n";
         else if(filename.endsWith(".mp4"))
-            header += "Content-Type: video/mp4\r\n";
+            contentHeader += "Content-Type: video/mp4\r\n";
         else if(filename.endsWith(".avi"))
-            header += "Content-Type: video/x-msvideo\r\n";
+            contentHeader += "Content-Type: video/x-msvideo\r\n";
         else if(filename.endsWith(".odt"))
-            header += "Content-Type: application/vnd.oasis.opendocument.text\r\n";
+            contentHeader += "Content-Type: application/vnd.oasis.opendocument.text\r\n";
         else if(filename.endsWith(".pdf"))
-            header += "Content-Type: application/pdf\r\n";
+            contentHeader += "Content-Type: application/pdf\r\n";
 
-        header += "Content-Length: " + length + "\r\n";
-        header += "Server: Bot\r\n";
-        header += "\r\n";
-        return header;
+        contentHeader += "Content-Length: " + length + "\r\n";
+        contentHeader += "Server: Bot\r\n";
+        contentHeader += "\r\n";
+        return contentHeader;
     }
 
     /**
@@ -289,30 +289,153 @@ public class WebServer {
     }
 
     /**
-     * Implémentation de a requete HTTP HEAD.
-     * // TODO JAVADOC (important de bien détailler l'action de la méthode)
+     * Implémentation de a requête HTTP HEAD.
+     * La méthode HTTP HEAD demande les en-têtes qui seraient retournés si la ressource spécifiée était demandée avec la méthode HTTP GET.
+     * La méthode HEAD ne renvoie pas de corps, si c'est le cas, il doit être ignoré.
+     * En cas de succès, la réponse contient un entête. Le code HTTP retourné est 200.
+     * En cas d'échec (la ressource n'a pas ete trouvée), la réponse contient un entête et un corps (la page d'erreur 404). Le code HTTP retourné est 404.
+     * En cas d'erreur interne sur le serveur, la réponse contient seulement un entête spécifiant une erreur 500.
      * @param filename: l'uri de la ressource demandée
      */
     private void requeteHEAD(String filename) {
+
         System.out.println("requete HEAD " + filename);
+        try {
+            // Vérification de l'existence de la ressource demandée et envoie de l'entête, renvoie la page not found sinon
+            File ressource = new File(filename);
+            if(ressource.exists() && ressource.isFile()) {
+                socOut.write(genererHeader("200 OK", filename, ressource.length()).getBytes());
+            } else {
+                ressource = new File(NOT_FOUND);
+                socOut.write(genererHeader("404 Not Found", NOT_FOUND, ressource.length()).getBytes());
+            }
+
+            //Envoi des données
+            socOut.flush();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            // En cas d'erreur on essaie d'avertir le client
+            try {
+                socOut.write(genererHeader("500 Internal Server Error").getBytes());
+                socOut.flush();
+            } catch (Exception e2) {};
+        }
     }
 
     /**
      * Implémentation de a requete HTTP PUT.
-     * // TODO JAVADOC (important de bien détailler l'action de la méthode)
+     * La méthode tente de créer une nouvelle ressource, dont le contenu est constitué des données du corps de la requète reçue.
+     * Si une ressource du même nom existait déjà sur le serveur, elle est écrasée et l'en-tête de la réponse envoyée a un code de 204 No Content.
+     * Si la ressource n'existait pas, elle est créée et l'en-tête de la réponse envoyée a un code de 201 Created.
+     * La réponse ne contient pas de corps.
      * @param filename: l'uri de la ressource demandée
      */
     private void requetePUT(String filename) {
+        try {
+            File resource = new File(filename);
+            boolean existed = resource.exists();
+
+            // Efface le contenu fichier avant de le remplacer par les informations reçues
+            PrintWriter pw = new PrintWriter(resource);
+            pw.close();
+
+            // Ouverture d'un flux d'écriture binaire vers le fichier
+            BufferedOutputStream fileOut = new BufferedOutputStream(new FileOutputStream(resource));
+
+            // Lecture du corps de la requete
+            byte[] buffer = new byte[256];
+            while(socIn.available() > 0) {
+                int nbRead = socIn.read(buffer);
+                fileOut.write(buffer, 0, nbRead);
+            }
+            fileOut.flush();
+
+            //Fermeture du flux d'écriture vers le fichier
+            fileOut.close();
+
+            // Envoi du Header (pas besoin de corps)
+            if(existed) {
+                // Ressource modifiée avec succès, aucune information supplémentaire à fournir
+                socOut.write(genererHeader("204 No Content").getBytes());
+            } else {
+                // Ressource créée avec succès
+                socOut.write(genererHeader("201 Created").getBytes());
+            }
+            // Envoi des données
+            socOut.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+            // En cas d'erreur on essaie d'avertir le client
+            try {
+                socOut.write(genererHeader("500 Internal Server Error").getBytes());
+                socOut.flush();
+            } catch (Exception e2) {};
+        }
         System.out.println("requete PUT " + filename);
     }
 
     /**
-     * Implémentation de a requete HTTP DELETE.
-     * // TODO JAVADOC (important de bien détailler l'action de la méthode)
+     * Implémentation de la requête HTTP DELETE.
+     * La méthode HTTP DELETE supprime la ressource indiquée.
+     * En cas de succès, la réponse contient un entête. Le code HTTP retourné est 204.
+     * En cas de succès, si on trouve un fichier de statut, la réponse contient un entête et un corps (ce fichier). Le code HTTP retourné est 200.
+     * En cas d'échec (la ressource n'a pas ete trouvée), la réponse contient un entête et un corps (la page d'erreur 404). Le code HTTP retourné est 404.
+     * En cas d'erreur interne sur le serveur, la réponse contient seulement un entête spécifiant une erreur 500.
      * @param filename: l'uri de la ressource demandée
      */
     private void requeteDELETE(String filename) {
+
         System.out.println("requete DELETE " + filename);
+        try {
+            File ressource = new File(filename);
+            // Suppression du fichier
+            boolean deleted = false;
+            if(ressource.exists() && ressource.isFile()) {
+                deleted = ressource.delete();
+            }
+
+            // Envoi du Header
+            if(deleted) {
+
+                // Si fichier de statut trouvé, la méthode DELETE renvoie un code 200 et un fichier de statut plutôt qu'un code 204
+                ressource = new File(STATUT_DELETE);
+                if(ressource.exists() && ressource.isFile()) {
+                    socOut.write(genererHeader("200 OK", STATUT_DELETE, ressource.length()).getBytes());
+
+                    // Ouverture d'un flux de lecture binaire sur la ressource
+                    BufferedInputStream fileIn = new BufferedInputStream(new FileInputStream(ressource));
+
+                    byte[] buffer = new byte[256];
+                    int nbRead;
+                    while((nbRead = fileIn.read(buffer)) != -1) {
+                        socOut.write(buffer, 0, nbRead);
+                    }
+
+                    // Fermeture du flux de lecture
+                    fileIn.close();
+                } else {
+                    //Suppression du fichier effectué
+                    socOut.write(genererHeader("204 No Content").getBytes());
+                }
+            } else if (!ressource.exists()) {
+                // Le fichier est introuvable
+                socOut.write(genererHeader("404 Not Found").getBytes());
+            } else {
+                // Impossible de supprimer le fichier
+                socOut.write(genererHeader("403 Forbidden").getBytes());
+            }
+            // Envoi des données
+            socOut.flush();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            // En cas d'erreur on essaie d'avertir le client
+            try {
+                socOut.write(genererHeader("500 Internal Server Error").getBytes());
+                socOut.flush();
+            } catch (Exception e2) {};
+        }
     }
 
     /**
