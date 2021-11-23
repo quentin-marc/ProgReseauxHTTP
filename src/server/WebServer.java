@@ -9,6 +9,7 @@ public class WebServer {
 
     // definition des URI
     private static final String SOURCE_DIRECTORY = "src/server/files/";
+    private static final String RESSOURCE_DIRECTORY = "ressources/";
     private static final String NOT_FOUND = SOURCE_DIRECTORY+"notFound.html";
     private static final String STATUT_DELETE = SOURCE_DIRECTORY+"statutDelete.html";
     private static final String INDEX = SOURCE_DIRECTORY+"index.html";
@@ -97,7 +98,7 @@ public class WebServer {
                         // TODO get obligatoirement?
                         requeteGET(INDEX);
                     }
-                    else if(nomRessource.startsWith(SOURCE_DIRECTORY)) {
+                    else if(nomRessource.startsWith(SOURCE_DIRECTORY) || nomRessource.startsWith(RESSOURCE_DIRECTORY)) {
 
                         // On redirige vers la méthode associée à la requête de l'utilisateur
                         switch (typeRequete){
@@ -160,31 +161,30 @@ public class WebServer {
      */
     protected String genererHeader(String status, String filename, long length) {
 
-        // TODO citation pack parrain? C'est cramé là
-        String header = "HTTP/1.0 " + status + "\r\n";
+        String contentHeader = "HTTP/1.0 " + status + "\r\n";
         if(filename.endsWith(".html") || filename.endsWith(".htm"))
-            header += "Content-Type: text/html\r\n";
+            contentHeader += "Content-Type: text/html\r\n";
         else if(filename.endsWith(".css"))
-            header += "Content-Type: text/css\r\n";
+            contentHeader += "Content-Type: text/css\r\n";
         else if(filename.endsWith(".png"))
-            header += "Content-Type: image/png\r\n";
+            contentHeader += "Content-Type: image/png\r\n";
         else if(filename.endsWith(".jpeg") || filename.endsWith(".jpg"))
-            header += "Content-Type: image/jpg\r\n";
+            contentHeader += "Content-Type: image/jpg\r\n";
         else if(filename.endsWith(".mp3"))
-            header += "Content-Type: audio/mp3\r\n";
+            contentHeader += "Content-Type: audio/mp3\r\n";
         else if(filename.endsWith(".mp4"))
-            header += "Content-Type: video/mp4\r\n";
+            contentHeader += "Content-Type: video/mp4\r\n";
         else if(filename.endsWith(".avi"))
-            header += "Content-Type: video/x-msvideo\r\n";
+            contentHeader += "Content-Type: video/x-msvideo\r\n";
         else if(filename.endsWith(".odt"))
-            header += "Content-Type: application/vnd.oasis.opendocument.text\r\n";
+            contentHeader += "Content-Type: application/vnd.oasis.opendocument.text\r\n";
         else if(filename.endsWith(".pdf"))
-            header += "Content-Type: application/pdf\r\n";
+            contentHeader += "Content-Type: application/pdf\r\n";
 
-        header += "Content-Length: " + length + "\r\n";
-        header += "Server: Bot\r\n";
-        header += "\r\n";
-        return header;
+        contentHeader += "Content-Length: " + length + "\r\n";
+        contentHeader += "Server: Bot\r\n";
+        contentHeader += "\r\n";
+        return contentHeader;
     }
 
     /**
