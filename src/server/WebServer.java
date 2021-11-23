@@ -14,11 +14,11 @@ public class WebServer {
     private static final String SOURCE_DIRECTORY = "src/server/files/";
     private static final String RESSOURCE_DIRECTORY = "ressources/";
     private static final String NOT_FOUND = SOURCE_DIRECTORY+"notFound.html";
+    private static final String STATUT_DELETE = SOURCE_DIRECTORY+"statutDelete.html";
     private static final String INDEX = SOURCE_DIRECTORY+"index.html";
 
     // canaux d'I/O en attribut
     BufferedInputStream socIn;
-    //BufferedReader socIn;
     BufferedOutputStream socOut;
 
     /**
@@ -97,7 +97,6 @@ public class WebServer {
                     String nomRessource = listeMotsHeader[1].substring(1, listeMotsHeader[1].length());
 
                     if(nomRessource.isEmpty()) {
-                        // TODO get obligatoirement?
                         requeteGET(INDEX);
                     }
                     else if(nomRessource.startsWith(SOURCE_DIRECTORY) || nomRessource.startsWith(RESSOURCE_DIRECTORY)) {
@@ -236,12 +235,60 @@ public class WebServer {
     }
 
     /**
-     * Implémentation de a requete HTTP POST.
-     * // TODO JAVADOC (important de bien détailler l'action de la méthode)
+     * Implémentation de la requete HTTP POST.
+     * Cette méthode essaie d'ajouter des informations à la fin d'une ressource HTML existante. Plusieurs cas sont possibles:
+     * 1. La ressource existe: les informations sont ajoutées à la fin de la ressource et on appelle la méthode GET pour retourner la page
+     * 2. La ressource n'existe pas: elle est créée et un code 201 est retourné et on appelle la méthode GET pour retourner la page
+     * 3. L'utilisateur tente d'accéder à une ressource qui n'est pas au format HTML: 403 Forbidden
+     * La réponse de cette requête possède en corps la ressource modifiee
      * @param filename: l'uri de la ressource demandée
      */
     private void requetePOST(String filename) {
         System.out.println("requete POST " + filename);
+
+        try {
+            File ressource = new File(filename);
+            boolean ressourceExistante = ressource.exists();
+
+            // Ouverture d'un flux d'écriture binaire vers le fichier, en mode insertion a la fin
+            // si le fichier n'existe pas, il est créé
+            BufferedOutputStream fluxEcritureFichier = new BufferedOutputStream(new FileOutputStream(ressource, ressourceExistante));
+
+            // Recopie des informations recues dans le fichier
+            byte[] buffer = new byte[8192], bufferRefactor = new byte[8192];
+            String bufferString = "", bufferStringRefactor = "";
+            int nbCarac = 0;
+            while(socIn.available() > 0) {
+
+                // lecture des paramètres de la requete
+                nbCarac = socIn.read(buffer);
+
+                // on place cette requette dans un paragraphe et on remplace les = par :
+                bufferString = new String(buffer);
+
+                bufferStringRefactor = "<p>"+bufferString.substring(0, nbCarac).replace("=", ": ")+"</p>";
+                System.out.println(bufferStringRefactor);
+                bufferRefactor = bufferStringRefactor.getBytes();
+
+                // on écrit à la fin du fichier
+                fluxEcritureFichier.write(bufferRefactor, 0, bufferRefactor.length);
+            }
+            fluxEcritureFichier.flush();
+            fluxEcritureFichier.close();
+
+            // La ressource a été créée / modifiee, on la retourne au client
+            requeteGET(filename);
+
+            // Envoi des donn�es
+            socOut.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+            // En cas d'erreur on essaie d'avertir le client
+            try {
+                socOut.write(genererHeader("500 Internal Server Error").getBytes());
+                socOut.flush();
+            } catch (Exception e2) {};
+        }
     }
 
     /**
@@ -335,6 +382,7 @@ public class WebServer {
      * Implémentation de la requête HTTP DELETE.
      * La méthode HTTP DELETE supprime la ressource indiquée.
      * En cas de succès, la réponse contient un entête. Le code HTTP retourné est 204.
+     * En cas de succès, si on trouve un fichier de statut, la réponse contient un entête et un corps (ce fichier). Le code HTTP retourné est 200.
      * En cas d'échec (la ressource n'a pas ete trouvée), la réponse contient un entête et un corps (la page d'erreur 404). Le code HTTP retourné est 404.
      * En cas d'erreur interne sur le serveur, la réponse contient seulement un entête spécifiant une erreur 500.
      * @param filename: l'uri de la ressource demandée
@@ -343,18 +391,37 @@ public class WebServer {
 
         System.out.println("requete DELETE " + filename);
         try {
-            File resource = new File(filename);
+            File ressource = new File(filename);
             // Suppression du fichier
             boolean deleted = false;
-            if(resource.exists() && resource.isFile()) {
-                deleted = resource.delete();
+            if(ressource.exists() && ressource.isFile()) {
+                deleted = ressource.delete();
             }
 
             // Envoi du Header
             if(deleted) {
-                // Suppression du fichier effectué
-                socOut.write(genererHeader("204 No Content").getBytes());
-            } else if (!resource.exists()) {
+
+                // Si fichier de statut trouvé, la méthode DELETE renvoie un code 200 et un fichier de statut plutôt qu'un code 204
+                ressource = new File(STATUT_DELETE);
+                if(ressource.exists() && ressource.isFile()) {
+                    socOut.write(genererHeader("200 OK", STATUT_DELETE, ressource.length()).getBytes());
+
+                    // Ouverture d'un flux de lecture binaire sur la ressource
+                    BufferedInputStream fileIn = new BufferedInputStream(new FileInputStream(ressource));
+
+                    byte[] buffer = new byte[256];
+                    int nbRead;
+                    while((nbRead = fileIn.read(buffer)) != -1) {
+                        socOut.write(buffer, 0, nbRead);
+                    }
+
+                    // Fermeture du flux de lecture
+                    fileIn.close();
+                } else {
+                    //Suppression du fichier effectué
+                    socOut.write(genererHeader("204 No Content").getBytes());
+                }
+            } else if (!ressource.exists()) {
                 // Le fichier est introuvable
                 socOut.write(genererHeader("404 Not Found").getBytes());
             } else {
