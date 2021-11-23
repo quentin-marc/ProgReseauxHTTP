@@ -40,14 +40,20 @@
     <span>Voici la liste des requêtes implémentées sur le serveur et un exemple d'utilisation. Les requêtes implémentées suivent le standard HTTP.</span>
     <ul>
         <li><b>GET:</b> "GET http://localhost:3000/src/server/files/helloWorld.html"</li>
-        <li><b>POST:</b></li>
-        <li><b>HEAD:</b></li>
+        <li><b>POST:</b> "POST http://localhost:3000/src/server/files/helloWorld.html" (+le texte à ajouter)</li>
         <li><b>PUT:</b> "PUT http://127.0.0.1:3000/src/server/files/helloWorld.html"</li>
-        <li><b>DELETE:</b></li>
         <li><b>HEAD:</b> "HEAD http://localhost:3000/src/server/files/helloWorld.html"</li>
-        <li><b>PUT:</b></li>
         <li><b>DELETE:</b> "DELETE http://localhost:3000/src/server/files/toDelete.html"</li>
     </ul>
+    <h2>Exemple de formulaire POST: liste d'invités</h2>
+    <p>Entrez le nom d'un invité à ajouter à la liste (sans accents):</p>
+    <form method="post" action="http://localhost:3000/src/server/files/listeInvites.html">
+        <div>
+            <label for="invite">Nom de l'invité:</label>
+            <input type="text" id="invite" name="invite">
+        </div>
+        <input type="submit">
+    </form>
     <h2>Erreurs prises en charge:</h2>
     <span>La gestion d'une partie des codes d'erreur HTTP a été prise en charge. En voici la liste:</span>
     <ul>
@@ -60,14 +66,6 @@
         <li><b>501 Not Implemented:</b> Le type de requête que vous essayez d'exécuter n'est pas pris en charge par le serveur. Pour connaitre les requêtes implémentées, se référencer à la section ci-dessus.</li>
     </ul>
     <span>TODO: Que se passe-t-il pour les erreurs non prises en charge? Renvoie quoi?</span>
-
-    <form method="post" action="http://localhost:3000/src/server/files/lol.html">
-        <div>
-            <label for="nom">Votre nom:</label>
-            <input type="text" id="nom" name="nom">
-        </div>
-        <input type="submit">
-    </form>
 </body>
 
 </html>

@@ -244,39 +244,96 @@ public class WebServer {
         System.out.println("requete POST " + filename);
 
         try {
-            File ressource = new File(filename);
-            boolean ressourceExistante = ressource.exists();
+            if(filename.endsWith(".html")){
+                File ressource = new File(filename);
+                boolean ressourceExistante = ressource.exists();
 
-            // Ouverture d'un flux d'écriture binaire vers le fichier, en mode insertion a la fin
-            // si le fichier n'existe pas, il est créé
-            BufferedOutputStream fluxEcritureFichier = new BufferedOutputStream(new FileOutputStream(ressource, ressourceExistante));
+                // Recopie des informations recues dans le fichier
+                byte[] buffer = new byte[8192], bufferRefactor = new byte[8192];
+                String bufferString = "", bufferStringRefactor = "";
+                int nbCarac = 0;
+                while(socIn.available() > 0) {
 
-            // Recopie des informations recues dans le fichier
-            byte[] buffer = new byte[8192], bufferRefactor = new byte[8192];
-            String bufferString = "", bufferStringRefactor = "";
-            int nbCarac = 0;
-            while(socIn.available() > 0) {
+                    // lecture des paramètres de la requete
+                    nbCarac = socIn.read(buffer);
 
-                // lecture des paramètres de la requete
-                nbCarac = socIn.read(buffer);
+                    // on place cette requette dans un paragraphe et on remplace les = par :
+                    bufferString = new String(buffer);
 
-                // on place cette requette dans un paragraphe et on remplace les = par :
-                bufferString = new String(buffer);
+                    // si pas au format HTML, on formate
+                    if(bufferString.charAt(0) == '<'){
+                        bufferStringRefactor = bufferString.substring(0, nbCarac);
+                    }
+                    else{
+                        bufferStringRefactor = "<p>"+bufferString.substring(0, nbCarac).replace("=", ": ")+"</p>";
+                    }
 
-                bufferStringRefactor = "<p>"+bufferString.substring(0, nbCarac).replace("=", ": ")+"</p>";
-                System.out.println(bufferStringRefactor);
-                bufferRefactor = bufferStringRefactor.getBytes();
+                    if(ressourceExistante){
 
-                // on écrit à la fin du fichier
-                fluxEcritureFichier.write(bufferRefactor, 0, bufferRefactor.length);
+                        BufferedReader streamFichierOriginel = new BufferedReader(new FileReader(ressource));
+                        StringBuilder fichierOriginel = new StringBuilder();
+
+                        int value;
+                        while ((value = streamFichierOriginel.read()) != -1) {
+                            fichierOriginel.append((char) value);
+                        }
+
+                        String page = fichierOriginel.toString();
+                        page = page.substring(0, page.lastIndexOf("</body></html>"))+bufferStringRefactor+page.substring(page.lastIndexOf("</body></html>"));
+                        bufferRefactor = page.getBytes();
+
+                        // Efface le contenu fichier avant de le remplacer par les informations reçues
+                        PrintWriter pw = new PrintWriter(ressource);
+                        pw.close();
+
+                        BufferedOutputStream fluxEcritureFichier = new BufferedOutputStream(new FileOutputStream(ressource, ressourceExistante));
+                        fluxEcritureFichier.write(bufferRefactor);
+                        fluxEcritureFichier.flush();
+                        fluxEcritureFichier.close();
+                    }
+                    else{
+                        String nomPage = filename.replace(SOURCE_DIRECTORY, "");
+                        nomPage = nomPage.substring(0,nomPage.lastIndexOf("."));
+                        String page = "<!doctype html><html><head><title>"+nomPage+"</title><meta charset=\"UTF-8\"></head>";
+                        page+="<style>\n" +
+                                "    body{\n" +
+                                "        width: 1200px;\n" +
+                                "        margin: 50px auto;\n" +
+                                "    }\n" +
+                                "\n" +
+                                "    h1{\n" +
+                                "        margin-top: 80px;\n" +
+                                "    }\n" +
+                                "\n" +
+                                "    h2{\n" +
+                                "        margin-top: 50px;\n" +
+                                "    }\n" +
+                                "\n" +
+                                "    h3{\n" +
+                                "        margin-top: 30px;\n" +
+                                "    }\n" +
+                                "</style>";
+                        page += "<body><h1>"+nomPage+"</h1>"+bufferStringRefactor+"</body></html>";
+                        bufferRefactor = page.getBytes();
+
+                        // Ouverture d'un flux d'écriture binaire vers le fichier, en mode insertion a la fin
+                        // si le fichier n'existe pas, il est créé
+                        BufferedOutputStream fluxEcritureFichier = new BufferedOutputStream(new FileOutputStream(ressource, ressourceExistante));
+                        fluxEcritureFichier.write(bufferRefactor);
+                        fluxEcritureFichier.flush();
+                        fluxEcritureFichier.close();
+                    }
+                }
+
+                // La ressource a été créée / modifiee, on la retourne au client
+                requeteGET(filename);
             }
-            fluxEcritureFichier.flush();
-            fluxEcritureFichier.close();
+            else{
+                // tentative d'acces à une ressource qui n'est pas html
+                socOut.write(genererHeader("403 Forbidden").getBytes());
+            }
 
-            // La ressource a été créée / modifiee, on la retourne au client
-            requeteGET(filename);
-
-            // Envoi des donn�es
+            // Envoi des donnees
             socOut.flush();
         } catch (Exception e) {
             e.printStackTrace();
