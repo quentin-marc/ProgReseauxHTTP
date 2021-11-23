@@ -4,6 +4,7 @@ package server;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 public class WebServer {
 
@@ -13,7 +14,7 @@ public class WebServer {
     private static final String INDEX = SOURCE_DIRECTORY+"index.html";
 
     // canaux d'I/O en attribut
-    BufferedReader socIn;
+    BufferedInputStream socIn;
     BufferedOutputStream socOut;
 
     /**
@@ -48,8 +49,7 @@ public class WebServer {
                 System.out.println("[IP: "+socketClient.getInetAddress()+", port: "+socketClient.getPort()+", localPort: "+socketClient.getLocalPort()+"]\n");
 
                 // création des canaux de communication avec le client
-                socIn = new BufferedReader(new InputStreamReader(
-                        socketClient.getInputStream()));
+                socIn = new BufferedInputStream(socketClient.getInputStream());
                 socOut = new BufferedOutputStream(socketClient.getOutputStream());
 
                 // Si la requete est mal formée (la sequence doit se terminer par \r\n\r\n), affichage d'une erreur 400
@@ -93,7 +93,6 @@ public class WebServer {
                     String nomRessource = listeMotsHeader[1].substring(1, listeMotsHeader[1].length());
 
                     if(nomRessource.isEmpty()) {
-                        // TODO get obligatoirement?
                         requeteGET(INDEX);
                     }
                     else if(nomRessource.startsWith(SOURCE_DIRECTORY)) {
@@ -233,12 +232,60 @@ public class WebServer {
     }
 
     /**
-     * Implémentation de a requete HTTP POST.
-     * // TODO JAVADOC (important de bien détailler l'action de la méthode)
+     * Implémentation de la requete HTTP POST.
+     * Cette méthode essaie d'ajouter des informations à la fin d'une ressource HTML existante. Plusieurs cas sont possibles:
+     * 1. La ressource existe: les informations sont ajoutées à la fin de la ressource et on appelle la méthode GET pour retourner la page
+     * 2. La ressource n'existe pas: elle est créée et un code 201 est retourné et on appelle la méthode GET pour retourner la page
+     * 3. L'utilisateur tente d'accéder à une ressource qui n'est pas au format HTML: 403 Forbidden
+     * La réponse de cette requête possède en corps la ressource modifiee
      * @param filename: l'uri de la ressource demandée
      */
     private void requetePOST(String filename) {
         System.out.println("requete POST " + filename);
+
+        try {
+            File ressource = new File(filename);
+            boolean ressourceExistante = ressource.exists();
+
+            // Ouverture d'un flux d'écriture binaire vers le fichier, en mode insertion a la fin
+            // si le fichier n'existe pas, il est créé
+            BufferedOutputStream fluxEcritureFichier = new BufferedOutputStream(new FileOutputStream(ressource, ressourceExistante));
+
+            // Recopie des informations recues dans le fichier
+            byte[] buffer = new byte[8192], bufferRefactor = new byte[8192];
+            String bufferString = "", bufferStringRefactor = "";
+            int nbCarac = 0;
+            while(socIn.available() > 0) {
+
+                // lecture des paramètres de la requete
+                nbCarac = socIn.read(buffer);
+
+                // on place cette requette dans un paragraphe et on remplace les = par :
+                bufferString = new String(buffer);
+
+                bufferStringRefactor = "<p>"+bufferString.substring(0, nbCarac).replace("=", ": ")+"</p>";
+                System.out.println(bufferStringRefactor);
+                bufferRefactor = bufferStringRefactor.getBytes();
+
+                // on écrit à la fin du fichier
+                fluxEcritureFichier.write(bufferRefactor, 0, bufferRefactor.length);
+            }
+            fluxEcritureFichier.flush();
+            fluxEcritureFichier.close();
+
+            // La ressource a été créée / modifiee, on la retourne au client
+            requeteGET(filename);
+
+            // Envoi des donn�es
+            socOut.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+            // En cas d'erreur on essaie d'avertir le client
+            try {
+                socOut.write(genererHeader("500 Internal Server Error").getBytes());
+                socOut.flush();
+            } catch (Exception e2) {};
+        }
     }
 
     /**
