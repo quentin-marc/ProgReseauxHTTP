@@ -10,6 +10,7 @@ public class WebServer {
     // definition des URI
     private static final String SOURCE_DIRECTORY = "src/server/files/";
     private static final String NOT_FOUND = SOURCE_DIRECTORY+"notFound.html";
+    private static final String STATUT_DELETE = SOURCE_DIRECTORY+"statutDelete.html";
     private static final String INDEX = SOURCE_DIRECTORY+"index.html";
 
     // canaux d'I/O en attribut
@@ -340,18 +341,36 @@ public class WebServer {
 
         System.out.println("requete DELETE " + filename);
         try {
-            File resource = new File(filename);
+            File ressource = new File(filename);
             // Suppression du fichier
             boolean deleted = false;
-            if(resource.exists() && resource.isFile()) {
-                deleted = resource.delete();
+            if(ressource.exists() && ressource.isFile()) {
+                deleted = ressource.delete();
             }
 
             // Envoi du Header
             if(deleted) {
-                // Suppression du fichier effectué
-                socOut.write(genererHeader("204 No Content").getBytes());
-            } else if (!resource.exists()) {
+
+                ressource = new File(STATUT_DELETE);
+                if(ressource.exists() && ressource.isFile()) {
+                    socOut.write(genererHeader("200 OK", STATUT_DELETE, ressource.length()).getBytes());
+
+                    // Ouverture d'un flux de lecture binaire sur la ressource
+                    BufferedInputStream fileIn = new BufferedInputStream(new FileInputStream(ressource));
+
+                    byte[] buffer = new byte[256];
+                    int nbRead;
+                    while((nbRead = fileIn.read(buffer)) != -1) {
+                        socOut.write(buffer, 0, nbRead);
+                    }
+
+                    // Fermeture du flux de lecture
+                    fileIn.close();
+                } else {
+                    //Suppression du fichier effectué
+                    socOut.write(genererHeader("204 No Content").getBytes());
+                }
+            } else if (!ressource.exists()) {
                 // Le fichier est introuvable
                 socOut.write(genererHeader("404 Not Found").getBytes());
             } else {
