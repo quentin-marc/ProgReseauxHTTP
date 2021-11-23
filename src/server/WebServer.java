@@ -1,9 +1,12 @@
 package server;
 ///A Simple Web Server (WebServer.java)
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 
 public class WebServer {
 
@@ -167,7 +170,7 @@ public class WebServer {
         else if(filename.endsWith(".png"))
             contentHeader += "Content-Type: image/png\r\n";
         else if(filename.endsWith(".jpeg") || filename.endsWith(".jpg"))
-            contentHeader += "Content-Type: image/jpg\r\n";
+            contentHeader += "Content-Type: image/jpeg\r\n";
         else if(filename.endsWith(".mp3"))
             contentHeader += "Content-Type: audio/mp3\r\n";
         else if(filename.endsWith(".mp4"))
