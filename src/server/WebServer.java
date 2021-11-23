@@ -98,7 +98,7 @@ public class WebServer {
                     }
                     else if(nomRessource.startsWith(SOURCE_DIRECTORY)) {
 
-                        // On redirigie vers la méthode associée à la requete de l'utilisateur
+                        // On redirige vers la méthode associée à la requête de l'utilisateur
                         switch (typeRequete){
                             case "GET":
                                 requeteGET(nomRessource);
@@ -242,12 +242,39 @@ public class WebServer {
     }
 
     /**
-     * Implémentation de a requete HTTP HEAD.
-     * // TODO JAVADOC (important de bien détailler l'action de la méthode)
+     * Implémentation de a requête HTTP HEAD.
+     * La méthode HTTP HEAD demande les en-têtes qui seraient retournés si la ressource spécifiée était demandée avec la méthode HTTP GET.
+     * La méthode HEAD ne renvoie pas de corps, si c'est le cas, il doit être ignoré.
+     * En cas de succès, la réponse contient un entête. Le code HTTP retourné est 200.
+     * En cas d'échec (la ressource n'a pas ete trouvée), la réponse contient un entête et un corps (la page d'erreur 404). Le code HTTP retourné est 404.
+     * En cas d'erreur interne sur le serveur, la réponse contient seulement un entête spécifiant une erreur 500.
+     * Aucun autre code HTTP n'est pris en charge.
      * @param filename: l'uri de la ressource demandée
      */
     private void requeteHEAD(String filename) {
+
         System.out.println("requete HEAD " + filename);
+        try {
+            // Vérification de l'existence de la ressource demandée et envoie de l'entête, renvoie la page not found sinon
+            File ressource = new File(filename);
+            if(ressource.exists() && ressource.isFile()) {
+                socOut.write(genererHeader("200 OK", filename, ressource.length()).getBytes());
+            } else {
+                ressource = new File(NOT_FOUND);
+                socOut.write(genererHeader("404 Not Found", NOT_FOUND, ressource.length()).getBytes());
+            }
+
+            //Envoi des données
+            socOut.flush();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            // En cas d'erreur on essaie d'avertir le client
+            try {
+                socOut.write(genererHeader("500 Internal Server Error").getBytes());
+                socOut.flush();
+            } catch (Exception e2) {};
+        }
     }
 
     /**
