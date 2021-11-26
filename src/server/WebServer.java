@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
 public class WebServer {
 
     // definition des URI
-    private static final String SOURCE_DIRECTORY = "src/server/files/";
+    private static final String SOURCE_DIRECTORY = "doc/";
     private static final String RESSOURCE_DIRECTORY = "ressources/";
     private static final String NOT_FOUND = SOURCE_DIRECTORY+"notFound.html";
     private static final String STATUT_DELETE = SOURCE_DIRECTORY+"statutDelete.html";
@@ -197,7 +197,6 @@ public class WebServer {
      * Aucun autre code HTTP n'est pris en charge.
      * @param filename: l'uri de la ressource demandée
      */
-    // TODO Implémentation erreur 404
     private void requeteGET(String filename) {
 
         try {
@@ -444,6 +443,7 @@ public class WebServer {
      * En cas d'erreur interne sur le serveur, la réponse contient seulement un entête spécifiant une erreur 500.
      * @param filename: l'uri de la ressource demandée
      */
+    //todo check result
     private void requeteDELETE(String filename) {
 
         System.out.println("requete DELETE " + filename);

@@ -30,24 +30,24 @@
     <H1>Bienvenue sur ce serveur HTTP</H1>
     <p>Ce serveur HTTP a été créé pour un projet scolaire de 4IF (INSA Lyon). Ci-dessous une liste des actions possibles sur le serveur. </p>
     <h2>Ressources disponibles:</h2>
-    <span>Les ressources accessibles se situent EXCLUSIVEMENT dans le dossier <b>"src/server/files/"</b>. En voici la liste:</span>
+    <span>Les ressources accessibles se situent EXCLUSIVEMENT dans le dossier <b>"doc/"</b>. En voici la liste:</span>
     <ul>
-        <li><a href="./">index.html</a></li>
-        <li><a href="./src/server/files/helloWorld.html">helloWorld.html</a></li>
-        <li><a href="./src/server/files/notFound.html">notFound.html</a></li>
+        <li><a href="">index.html</a></li>
+        <li><a href="./doc/helloWorld.html">helloWorld.html</a></li>
+        <li><a href="./doc/notFound.html">notFound.html</a></li>
     </ul>
     <h2>Requêtes implémentées:</h2>
     <span>Voici la liste des requêtes implémentées sur le serveur et un exemple d'utilisation. Les requêtes implémentées suivent le standard HTTP.</span>
     <ul>
-        <li><b>GET:</b> "GET http://localhost:3000/src/server/files/helloWorld.html"</li>
-        <li><b>POST:</b> "POST http://localhost:3000/src/server/files/helloWorld.html" (+le texte à ajouter)</li>
-        <li><b>PUT:</b> "PUT http://127.0.0.1:3000/src/server/files/helloWorld.html"</li>
-        <li><b>HEAD:</b> "HEAD http://localhost:3000/src/server/files/helloWorld.html"</li>
-        <li><b>DELETE:</b> "DELETE http://localhost:3000/src/server/files/toDelete.html"</li>
+        <li><b>GET:</b> "GET http://localhost:3000/doc/helloWorld.html"</li>
+        <li><b>POST:</b> "POST http://localhost:3000/doc/helloWorld.html" (+le texte à ajouter)</li>
+        <li><b>PUT:</b> "PUT http://127.0.0.1:3000/doc/helloWorld.html"</li>
+        <li><b>HEAD:</b> "HEAD http://localhost:3000/doc/helloWorld.html"</li>
+        <li><b>DELETE:</b> "DELETE http://localhost:3000/doc/toDelete.html"</li>
     </ul>
     <h2>Exemple de formulaire POST: liste d'invités</h2>
     <p>Entrez le nom d'un invité à ajouter à la liste (sans accents):</p>
-    <form method="post" action="http://localhost:3000/src/server/files/listeInvites.html">
+    <form method="post" action="http://localhost:3000/doc/listeInvites.html">
         <div>
             <label for="invite">Nom de l'invité:</label>
             <input type="text" id="invite" name="invite">
