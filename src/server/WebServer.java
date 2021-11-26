@@ -12,7 +12,6 @@ public class WebServer {
 
     // definition des URI
     private static final String SOURCE_DIRECTORY = "doc/";
-    private static final String RESSOURCE_DIRECTORY = "ressources/";
     private static final String NOT_FOUND = SOURCE_DIRECTORY+"notFound.html";
     private static final String STATUT_DELETE = SOURCE_DIRECTORY+"statutDelete.html";
     private static final String INDEX = SOURCE_DIRECTORY+"index.html";
@@ -99,7 +98,7 @@ public class WebServer {
                     if(nomRessource.isEmpty()) {
                         requeteGET(INDEX);
                     }
-                    else if(nomRessource.startsWith(SOURCE_DIRECTORY) || nomRessource.startsWith(RESSOURCE_DIRECTORY)) {
+                    else if(nomRessource.startsWith(SOURCE_DIRECTORY) || nomRessource.startsWith(SOURCE_DIRECTORY)) {
 
                         // On redirige vers la méthode associée à la requête de l'utilisateur
                         switch (typeRequete){
